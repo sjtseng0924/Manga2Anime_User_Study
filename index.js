@@ -1,12 +1,4 @@
-const BASELINES = [
-    { value: "ours", label: "Ours", file: "ours.png" },
-    { value: "animaker", label: "AniMaker", file: "animaker.png" },
-    { value: "storydiffusion", label: "StoryDiffusion", file: "storydiffusion.png" },
-    { value: "storyiter", label: "StoryIter", file: "storyiter.png" },
-    { value: "anystory", label: "AnyStory", file: "anystory.png" },
-];
-
-const STORYBOARD_CASES = [
+const CASE_FOLDERS = [
     "dualjustice1",
     "dualjustice2",
     "elf2",
@@ -17,20 +9,22 @@ const STORYBOARD_CASES = [
     "mado",
 ];
 
-const STORYBOARD_GROUPS = STORYBOARD_CASES.map((groupId, index) => {
-    return {
-        id: groupId,
-        title: `Question ${index + 1}`,
-        setNumber: index + 1,
-        data: BASELINES.map(baseline => ({
-            ...baseline,
-            url: `data/part1/${groupId}/${baseline.file}`,
-        })),
-        answers: {},
-    };
-});
+const PART1_BASELINES = [
+    { value: "ours", label: "Ours", file: "ours.png" },
+    { value: "animaker", label: "AniMaker", file: "animaker.png" },
+    { value: "storydiffusion", label: "StoryDiffusion", file: "storydiffusion.png" },
+    { value: "storyiter", label: "StoryIter", file: "storyiter.png" },
+    { value: "anystory", label: "AnyStory", file: "anystory.png" },
+];
 
-const ASPECTS = [
+const PART2_BASELINES = [
+    { value: "ours", label: "Ours", file: "ours.mp4" },
+    { value: "animaker", label: "AniMaker", file: "animaker.mp4" },
+    { value: "vimax", label: "Vimax", file: "vimax.mp4" },
+    { value: "storymem", label: "StoryMem", file: "storymem.mp4" },
+];
+
+const PART1_ASPECTS = [
     {
         key: "character_identity",
         title: "Character Identity Preservation",
@@ -73,15 +67,109 @@ const ASPECTS = [
     },
 ];
 
+const PART2_ASPECTS = [
+    {
+        key: "character_identity",
+        title: "Character Identity Preservation",
+        description: "評估影片中的角色是否能維持原始漫畫或角色參考圖中的外觀特徵，例如髮型、臉部特徵、服裝、體型與整體角色辨識度。若角色在動畫中仍然容易被辨認為同一位角色，則代表此項表現較佳。",
+        question: "請問哪一個影片符合 Character Identity Preservation?",
+    },
+    {
+        key: "manga_plot",
+        title: "Manga Plot Consistency",
+        description: "評估影片是否忠實呈現原始漫畫分鏡中的劇情流程與場景關係，包括角色互動、動作順序、情緒表現與事件發展。若影片能讓觀眾清楚理解原漫畫想表達的情節，則代表此項表現較佳。",
+        question: "請問哪一個影片符合 Manga Plot Consistency?",
+    },
+    {
+        key: "absence_ai_hallucination",
+        title: "Absence of AI Hallucination",
+        description: "評估影片中是否出現不合理或與原始漫畫無關的內容，例如多餘的角色、錯誤的物件、場景突然改變、角色外觀異常、肢體扭曲或不符合劇情的動作。若影片較少出現這類 AI 生成錯誤，則代表此項表現較佳。",
+        question: "請問哪一個影片符合 Absence of AI Hallucination?",
+    },
+    {
+        key: "visual_comfort_consistency",
+        title: "Visual Comfort & Consistency",
+        description: "評估影片播放是否流暢，動作自然、無明顯閃爍或跳動，且畫面風格與角色外觀從頭到尾一致，沒有突兀的轉變。",
+        question: "哪一個影片在流暢度與風格一致性上表現最佳?",
+    },
+    {
+        key: "overall_performance",
+        title: "Overall Performance",
+        description: "綜合評估影片的整體品質，包括角色一致性、劇情連貫性、畫面自然度、動畫流暢度、聲音帶給您的感受與觀看體驗。請根據您的整體感受，選出您認為品質較好的影片。",
+        question: "請問哪一個影片符合 Overall Performance?",
+    },
+];
+
+const PARTS = [
+    {
+        key: "part1",
+        label: "Part 1",
+        kind: "image",
+        introTitle: "Storyboard Evaluation",
+        introBody: [
+            "接下來你會看到 8 個 storyboard 題組。每一個題組中會有 5 張分鏡結果，以 Option A 到 Option E 表示。",
+            "請針對每一組 storyboard，分別依照四個面向作答：Character Identity Preservation、Manga Plot Consistency、Visual Quality、Overall Performance。每一個面向都請從看到的 5 張分鏡中，選出最符合該面向的一張。",
+            "每題都是單選，請依照你第一眼與整體觀看後的判斷作答。",
+        ],
+        options: PART1_BASELINES,
+        aspects: PART1_ASPECTS,
+    },
+    {
+        key: "part2",
+        label: "Part 2",
+        kind: "video",
+        introTitle: "Video Evaluation",
+        introBody: [
+            "接下來你會看到 8 個影片題組。每一個題組中會有 4 支影片，以 Option A 到 Option D 表示。",
+            "請針對每一組影片，分別依照五個面向作答：Character Identity Preservation、Manga Plot Consistency、Absence of AI Hallucination、Visual Comfort & Consistency、Overall Performance。",
+            "進入題目後，四支影片會嘗試自動同時播放一次。影片播完後會停在結尾；若想再看一次，請點選 Replay all videos，四支影片會一起從頭播放。",
+        ],
+        options: PART2_BASELINES,
+        aspects: PART2_ASPECTS,
+    },
+];
+
+PARTS.forEach(part => {
+    part.groups = CASE_FOLDERS.map((folder, index) => ({
+        id: folder,
+        title: `Question ${index + 1}`,
+        setNumber: index + 1,
+        data: part.options.map(option => ({
+            ...option,
+            url: `data/${part.key}/${folder}/${option.file}`,
+        })),
+        answers: {},
+    }));
+});
+
 let now = 0;
 let isSubmitting = false;
 const data_list = {
     username: "",
-    part1: STORYBOARD_GROUPS,
+    part1: PARTS[0].groups,
+    part2: PARTS[1].groups,
 };
 
 function getTotalPages() {
-    return STORYBOARD_GROUPS.length + 1;
+    return PARTS.reduce((total, part) => total + 1 + part.groups.length, 0);
+}
+
+function getPageInfo(pageNumber) {
+    if (pageNumber === 0) return { type: "username" };
+
+    let cursor = 1;
+    for (const part of PARTS) {
+        if (pageNumber === cursor) return { type: "intro", part };
+        cursor += 1;
+
+        const groupIndex = pageNumber - cursor;
+        if (groupIndex >= 0 && groupIndex < part.groups.length) {
+            return { type: "question", part, group: part.groups[groupIndex], groupIndex };
+        }
+        cursor += part.groups.length;
+    }
+
+    return null;
 }
 
 function prevPage() {
@@ -92,7 +180,6 @@ function prevPage() {
 
 function nextPage() {
     if (isSubmitting) return;
-
     if (!savePageData({ requireComplete: true })) return;
 
     if (now === getTotalPages()) {
@@ -105,7 +192,10 @@ function nextPage() {
 }
 
 function savePageData({ requireComplete }) {
-    if (now === 0) {
+    const pageInfo = getPageInfo(now);
+    if (!pageInfo) return false;
+
+    if (pageInfo.type === "username") {
         const username = document.getElementById("username");
         const value = username?.value.trim() || "";
         if (requireComplete && value === "") {
@@ -117,15 +207,13 @@ function savePageData({ requireComplete }) {
         return true;
     }
 
-    if (now === 1) return true;
+    if (pageInfo.type === "intro") return true;
 
-    const group = STORYBOARD_GROUPS[now - 2];
     let firstMissing = null;
-
-    ASPECTS.forEach(aspect => {
-        const selected = document.querySelector(`input[name="${aspect.key}"]:checked`);
+    pageInfo.part.aspects.forEach(aspect => {
+        const selected = document.querySelector(`input[name="${pageInfo.part.key}_${aspect.key}"]:checked`);
         if (selected) {
-            group.answers[aspect.key] = selected.value;
+            pageInfo.group.answers[aspect.key] = selected.value;
         } else if (!firstMissing) {
             firstMissing = aspect;
         }
@@ -152,12 +240,13 @@ function submitData() {
         timestamp: new Date().toISOString(),
     };
 
-    STORYBOARD_GROUPS.forEach((group, index) => {
-        const qName = `Part1_G${String(index + 1).padStart(2, "0")}`;
-        payload[`${qName}_case`] = group.id;
-
-        ASPECTS.forEach(aspect => {
-            payload[`${qName}_${aspect.key}`] = group.answers[aspect.key] || "";
+    PARTS.forEach(part => {
+        part.groups.forEach((group, index) => {
+            const qName = `${part.key.toUpperCase()}_G${String(index + 1).padStart(2, "0")}`;
+            payload[`${qName}_case`] = group.id;
+            part.aspects.forEach(aspect => {
+                payload[`${qName}_${aspect.key}`] = group.answers[aspect.key] || "";
+            });
         });
     });
 
@@ -192,14 +281,15 @@ function setNextButtonState(enabled) {
 }
 
 function renderObjects(pageNumber) {
-    document.body.className = pageNumber === 0 ? "username-page" : "study-page";
+    const pageInfo = getPageInfo(pageNumber);
+    document.body.className = pageInfo?.type === "username" ? "username-page" : "study-page";
 
-    if (pageNumber === 0) {
+    if (pageInfo?.type === "username") {
         renderUsernamePage();
-    } else if (pageNumber === 1) {
-        renderPart1IntroPage();
-    } else {
-        renderStoryboardPage(STORYBOARD_GROUPS[pageNumber - 2], pageNumber);
+    } else if (pageInfo?.type === "intro") {
+        renderIntroPage(pageInfo.part);
+    } else if (pageInfo?.type === "question") {
+        renderQuestionPage(pageInfo.part, pageInfo.group);
     }
 
     renderNavigation(pageNumber);
@@ -229,84 +319,98 @@ function renderUsernamePage() {
     });
 }
 
-function renderPart1IntroPage() {
+function renderIntroPage(part) {
     document.getElementById("images").innerHTML = "";
     document.getElementById("questions").innerHTML = `
         <section class="intro-panel">
-            <p class="eyebrow">Part 1</p>
-            <h1>Storyboard Evaluation</h1>
-            <p>
-                接下來你會看到 8 個 storyboard 題組。每一個題組中會有 5 張分鏡結果，以 Option A 到 Option E 表示。
-            </p>
-            <p>
-                請針對每一組 storyboard，分別依照四個面向作答：Character Identity Preservation、Manga Plot Consistency、Visual Quality、Overall Performance。
-                每一個面向都請從看到的 5 張分鏡中，選出最符合該面向的一張。
-            </p>
-            <p>
-                每題都是單選，請依照你第一眼與整體觀看後的判斷作答。
-            </p>
+            <p class="eyebrow">${part.label}</p>
+            <h1>${part.introTitle}</h1>
+            ${part.introBody.map(text => `<p>${text}</p>`).join("")}
         </section>
     `;
 }
 
-function renderStoryboardPage(group, pageNumber) {
+function renderQuestionPage(part, group) {
     document.getElementById("images").innerHTML = `
         <header class="study-header">
             <div>
+                <p class="eyebrow">${part.label}</p>
                 <h1>${group.title}</h1>
             </div>
             <p class="header-note">Please select exactly one best result for each criterion.</p>
         </header>
-        <section class="candidate-gallery" aria-label="${group.title} candidate images">
-            ${group.data.map((candidate, index) => renderCandidateCard(candidate, index)).join("")}
+        ${part.kind === "video" ? `
+            <div class="media-actions">
+                <button type="button" class="replay-button" onclick="replayPart2Videos()">Replay all videos</button>
+            </div>
+        ` : ""}
+        <section class="candidate-gallery ${part.kind === "video" ? "video-gallery" : ""}" aria-label="${group.title} candidate ${part.kind}s">
+            ${group.data.map((candidate, index) => renderCandidateCard(candidate, index, part.kind)).join("")}
         </section>
     `;
 
     document.getElementById("questions").innerHTML = `
         <div class="question-layout">
             <section class="question-stack">
-                ${ASPECTS.map(aspect => renderAspectQuestion(group, aspect)).join("")}
+                ${part.aspects.map(aspect => renderAspectQuestion(part, group, aspect)).join("")}
             </section>
         </div>
     `;
+
+    if (part.kind === "video") {
+        window.setTimeout(playCurrentVideos, 100);
+    }
 }
 
-function renderCandidateCard(candidate, index) {
+function renderCandidateCard(candidate, index, kind) {
     const label = `Option ${String.fromCharCode(65 + index)}`;
     return `
         <article class="candidate-card">
             <div class="candidate-meta">
                 <strong>${label}</strong>
             </div>
-            <div class="candidate-image-frame">
-                <img
-                    src="${candidate.url}"
-                    alt="${label}"
-                    onerror="this.closest('.candidate-image-frame').classList.add('image-missing'); this.remove();"
-                >
-                <span class="missing-image-text">Missing image</span>
+            <div class="candidate-image-frame ${kind === "video" ? "candidate-video-frame" : ""}">
+                ${kind === "video" ? `
+                    <video
+                        class="part2-video"
+                        src="${candidate.url}"
+                        preload="auto"
+                        playsinline
+                        onerror="this.closest('.candidate-image-frame').classList.add('image-missing'); this.remove();"
+                    ></video>
+                ` : `
+                    <img
+                        src="${candidate.url}"
+                        alt="${label}"
+                        onerror="this.closest('.candidate-image-frame').classList.add('image-missing'); this.remove();"
+                    >
+                `}
+                <span class="missing-image-text">Missing ${kind}</span>
             </div>
         </article>
     `;
 }
 
-function renderAspectQuestion(group, aspect) {
+function renderAspectQuestion(part, group, aspect) {
     return `
         <fieldset class="aspect-question" id="question-${aspect.key}">
             <legend>${aspect.title}</legend>
             <div class="question-instruction">
                 <p>${aspect.description}</p>
-                <ul>
-                    ${aspect.criteria.map(item => `<li>${item}</li>`).join("")}
-                </ul>
+                ${aspect.question ? `<p class="question-prompt">${aspect.question}</p>` : ""}
+                ${aspect.criteria ? `
+                    <ul>
+                        ${aspect.criteria.map(item => `<li>${item}</li>`).join("")}
+                    </ul>
+                ` : ""}
             </div>
-            <div class="option-grid">
+            <div class="option-grid ${part.kind === "video" ? "video-option-grid" : ""}">
                 ${group.data.map((candidate, index) => {
                     const optionLabel = `Option ${String.fromCharCode(65 + index)}`;
                     const checked = group.answers[aspect.key] === candidate.value ? "checked" : "";
                     return `
                         <label class="choice-card">
-                            <input type="radio" name="${aspect.key}" value="${candidate.value}" ${checked}>
+                            <input type="radio" name="${part.key}_${aspect.key}" value="${candidate.value}" ${checked}>
                             <span>${optionLabel}</span>
                         </label>
                     `;
@@ -314,6 +418,28 @@ function renderAspectQuestion(group, aspect) {
             </div>
         </fieldset>
     `;
+}
+
+function playCurrentVideos() {
+    document.querySelectorAll(".part2-video").forEach(video => {
+        video.currentTime = 0;
+        const playPromise = video.play();
+        if (playPromise) {
+            playPromise.catch(() => {
+                video.muted = true;
+                video.play().catch(() => {});
+            });
+        }
+    });
+}
+
+function replayPart2Videos() {
+    document.querySelectorAll(".part2-video").forEach(video => {
+        video.pause();
+        video.currentTime = 0;
+        video.muted = false;
+    });
+    playCurrentVideos();
 }
 
 function renderNavigation(pageNumber) {

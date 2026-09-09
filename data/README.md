@@ -1,6 +1,19 @@
 # Data Layout
 
-Part 1 currently uses 8 storyboard groups. Part 2 keeps the same folder structure for later data. Put one image for each baseline in each group folder:
+The study uses the same 8 case folders for Part 1 and Part 2:
+
+- `dualjustice1`
+- `dualjustice2`
+- `elf2`
+- `elf3`
+- `goblin`
+- `kick`
+- `lovehina`
+- `mado`
+
+## Part 1: storyboard images
+
+Put 5 PNG files in each case folder:
 
 ```text
 data/
@@ -24,37 +37,31 @@ data/
       storydiffusion.png
       storyiter.png
       anystory.png
-  part2/
-    dualjustice1/
-      ours.png
-      animaker.png
-      storydiffusion.png
-      storyiter.png
-      anystory.png
-    ...
-    mado/
-      ours.png
-      animaker.png
-      storydiffusion.png
-      storyiter.png
-      anystory.png
 ```
 
-The web page expects these exact lowercase file names for Part 1:
+## Part 2: videos
 
-- `ours.png`
-- `animaker.png`
-- `storydiffusion.png`
-- `storyiter.png`
-- `anystory.png`
+Put 4 MP4 files in each case folder:
 
-The 8 folder names are:
+```text
+data/
+  part2/
+    dualjustice1/
+      ours.mp4
+      animaker.mp4
+      vimax.mp4
+      storymem.mp4
+    dualjustice2/
+      ours.mp4
+      animaker.mp4
+      vimax.mp4
+      storymem.mp4
+    ...
+    mado/
+      ours.mp4
+      animaker.mp4
+      vimax.mp4
+      storymem.mp4
+```
 
-- `dualjustice1`
-- `dualjustice2`
-- `elf2`
-- `elf3`
-- `goblin`
-- `kick`
-- `lovehina`
-- `mado`
+The page shows these files to users only as `Option A`, `Option B`, etc. The real method names are still stored in the submitted data.
