@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Study</title>
+    <script>
+        document.write('<link rel="stylesheet" href="style.css?v=' + Date.now() + '">');
+    </script>
+</head>
+
+<body>
+    <main class="app-shell">
+        <form id="study_form">
+            <div id="images"></div>
+            <div id="questions"></div>
+        </form>
+
+        <div class="navigation-container">
+            <button type="button" id="prev_button" onclick="prevPage()">PREV</button>
+            <p id="num_page"></p>
+            <button type="button" id="next_button" onclick="nextPage()">NEXT</button>
+        </div>
+    </main>
+
+    <script src="index.js"></script>
+    <script>
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxQrX1wlkhtaexOkeA9oa9eCDTN1qWb0wz0Pq3JiZTkpAmPuCtvTgMN4MLRQp0uj71QKw/exec";
+        renderObjects(now);
+    </script>
+</body>
+
+</html>
