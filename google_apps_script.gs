@@ -9,7 +9,7 @@ function doPost(e) {
     "anime",
     "character_identity",
     "manga_plot",
-    "visual_quality",
+    "absence_ai_hallucination",
     "overall_performance"
   ], payload.part1 || [], timestamp);
 

@@ -28,42 +28,26 @@ const PART1_ASPECTS = [
     {
         key: "character_identity",
         title: "Character Identity Preservation",
-        description: "請判斷哪一張分鏡最能維持角色身份一致性。",
-        criteria: [
-            "同一角色在不同畫格中應保有穩定的臉部特徵、髮型、服裝與主要辨識特徵。",
-            "若角色身份混淆、外觀突然變成另一個人，或重要配件消失，請降低評價。",
-            "請優先比較角色是否可被持續辨認，而不是單張圖片是否最好看。",
-        ],
+        description: "評估分鏡中的角色是否能維持原始漫畫或角色參考圖中的外觀特徵，例如髮型、臉部特徵、服裝、體型與整體角色辨識度。若角色在分鏡中仍然容易被辨認為同一位角色，則代表此項表現較佳。",
+        question: "請問哪一個分鏡符合 Character Identity Preservation?",
     },
     {
         key: "manga_plot",
         title: "Manga Plot Consistency",
-        description: "請判斷哪一張分鏡最符合故事情節與畫格之間的連續性。",
-        criteria: [
-            "分鏡內容應符合題目故事，角色行動、事件順序與場景轉換要合理。",
-            "若出現劇情斷裂、動作不連續、關鍵事件缺漏或畫格彼此矛盾，請降低評價。",
-            "請依整組分鏡的敘事完整度作答，而不是只看其中一格。",
-        ],
+        description: "評估分鏡是否忠實呈現原始漫畫分鏡中的劇情流程與場景關係，包括角色互動、動作順序、情緒表現與事件發展。若分鏡能讓觀眾清楚理解原漫畫想表達的情節，則代表此項表現較佳。",
+        question: "請問哪一個分鏡符合 Manga Plot Consistency?",
     },
     {
-        key: "visual_quality",
-        title: "Visual Quality",
-        description: "請判斷哪一張分鏡整體視覺品質最好。",
-        criteria: [
-            "請考量構圖、線條清晰度、畫面完成度、細節合理性與是否有明顯生成瑕疵。",
-            "若有扭曲、破碎、文字雜訊、不自然肢體或難以理解的畫面，請降低評價。",
-            "此面向著重圖像品質，不需要把劇情或角色一致性作為主要判斷。",
-        ],
+        key: "absence_ai_hallucination",
+        title: "Absence of AI Hallucination",
+        description: "評估分鏡中是否出現不合理或與原始漫畫無關的內容，例如多餘的角色、錯誤的物件、場景突然改變、角色外觀異常、肢體扭曲或不符合劇情的動作。若分鏡較少出現這類 AI 生成錯誤，則代表此項表現較佳。",
+        question: "請問哪一個分鏡符合 Absence of AI Hallucination?",
     },
     {
         key: "overall_performance",
         title: "Overall Performance",
-        description: "請綜合所有面向，選出整體表現最好的分鏡。",
-        criteria: [
-            "請同時考量角色一致性、故事連續性、漫畫感、構圖與整體可讀性。",
-            "若某方法在單一面向很好，但整體分鏡不穩定，請以整體使用感受作為最後判斷。",
-            "請選出你認為最適合作為該組最終輸出的結果。",
-        ],
+        description: "綜合評估分鏡的整體品質，包括角色一致性、劇情連貫性、畫面自然度與觀看體驗。請根據您的整體感受，選出您認為品質較好的分鏡。",
+        question: "請問哪一個分鏡符合 Overall Performance?",
     },
 ];
 
@@ -108,7 +92,7 @@ const PARTS = [
         introTitle: "Storyboard Evaluation",
         introBody: [
             "接下來你會看到 8 個 storyboard 題組。每一個題組中會有 5 張分鏡結果，以 Option A 到 Option E 表示。",
-            "請針對每一組 storyboard，分別依照四個面向作答：Character Identity Preservation、Manga Plot Consistency、Visual Quality、Overall Performance。每一個面向都請從看到的 5 張分鏡中，選出最符合該面向的一張。",
+            "請針對每一組 storyboard，分別依照四個面向作答：Character Identity Preservation、Manga Plot Consistency、Absence of AI Hallucination、Overall Performance。每一個面向都請從看到的 5 張分鏡中，選出最符合該面向的一張。",
             "每題都是單選，請依照你第一眼與整體觀看後的判斷作答。",
         ],
         options: PART1_BASELINES,
