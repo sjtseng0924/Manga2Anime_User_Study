@@ -236,19 +236,11 @@ function submitData() {
     setNextButtonState(false);
 
     const payload = {
-        user_id: data_list.username,
+        username: data_list.username,
         timestamp: new Date().toISOString(),
+        part1: buildPartRows(PARTS[0]),
+        part2: buildPartRows(PARTS[1]),
     };
-
-    PARTS.forEach(part => {
-        part.groups.forEach((group, index) => {
-            const qName = `${part.key.toUpperCase()}_G${String(index + 1).padStart(2, "0")}`;
-            payload[`${qName}_case`] = group.id;
-            part.aspects.forEach(aspect => {
-                payload[`${qName}_${aspect.key}`] = group.answers[aspect.key] || "";
-            });
-        });
-    });
 
     if (!GAS_API_URL || GAS_API_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
         console.log("Mock Submit Payload:", payload);
@@ -270,6 +262,21 @@ function submitData() {
         setNextButtonState(true);
         alert("Error submitting. Please try again.");
         console.error(err);
+    });
+}
+
+function buildPartRows(part) {
+    return part.groups.map(group => {
+        const row = {
+            username: data_list.username,
+            anime: group.id,
+        };
+
+        part.aspects.forEach(aspect => {
+            row[aspect.key] = group.answers[aspect.key] || "";
+        });
+
+        return row;
     });
 }
 
