@@ -9,6 +9,11 @@ const CASE_FOLDERS = [
     "mado",
 ];
 
+const MANGA_PAGE_FILES = ["page1.jpg", "page2.jpg", "page3.jpg"];
+const MANGA_FOLDER_NAMES = {
+    dualjustice2: "DualJustice2",
+};
+
 const PART1_BASELINES = [
     { value: "ours", label: "Ours", file: "ours.png" },
     { value: "animaker", label: "AniMaker", file: "animaker.png" },
@@ -330,6 +335,7 @@ function renderQuestionPage(part, group) {
             </div>
             <p class="header-note">Please select exactly one best result for each criterion.</p>
         </header>
+        ${renderMangaSource(group)}
         ${part.kind === "video" ? `
             <div class="media-actions">
                 <button type="button" class="replay-button" onclick="replayPart2Videos()">Replay all videos</button>
@@ -350,6 +356,34 @@ function renderQuestionPage(part, group) {
 
     if (part.kind === "video") {
         window.setTimeout(playCurrentVideos, 100);
+    }
+}
+
+function renderMangaSource(group) {
+    const mangaFolder = MANGA_FOLDER_NAMES[group.id] || group.id;
+    const pages = MANGA_PAGE_FILES.map((file, index) => `
+        <figure class="manga-page">
+            <img
+                src="data/manga/${mangaFolder}/${file}"
+                alt="${group.title} Manga Source Page ${index + 1}"
+                onload="this.closest('.manga-source').classList.add('has-page')"
+                onerror="const section = this.closest('.manga-source'); this.closest('.manga-page').remove(); updateMangaSourceVisibility(section)"
+            >
+            <figcaption>Page ${index + 1}</figcaption>
+        </figure>
+    `).join("");
+
+    return `
+        <section class="manga-source" aria-label="${group.title} Manga Source">
+            <h2>Manga Source</h2>
+            <div class="manga-pages">${pages}</div>
+        </section>
+    `;
+}
+
+function updateMangaSourceVisibility(section) {
+    if (section && !section.querySelector(".manga-page")) {
+        section.remove();
     }
 }
 
