@@ -338,6 +338,7 @@ function renderQuestionPage(part, group) {
         ${renderMangaSource(group)}
         ${part.kind === "video" ? `
             <div class="media-actions">
+                <p class="video-wait-note">Please wait until all videos have loaded, then click 'Replay all videos' to watch.</p>
                 <button type="button" class="replay-button" onclick="replayPart2Videos()">Replay all videos</button>
             </div>
         ` : ""}
@@ -400,9 +401,18 @@ function renderCandidateCard(candidate, index, kind) {
                         class="part2-video"
                         src="${candidate.url}"
                         preload="auto"
+                        muted
                         playsinline
-                        onerror="this.closest('.candidate-image-frame').classList.add('image-missing'); this.remove();"
+                        onerror="const frame = this.closest('.candidate-image-frame'); frame.classList.add('image-missing'); this.remove(); frame.querySelector('.video-audio-button')?.remove();"
                     ></video>
+                    <button
+                        type="button"
+                        class="video-audio-button"
+                        aria-label="Turn sound on for ${label}"
+                        aria-pressed="false"
+                        title="Turn sound on"
+                        onclick="toggleCandidateAudio(this)"
+                    >🔇</button>
                 ` : `
                     <img
                         src="${candidate.url}"
@@ -448,6 +458,9 @@ function renderAspectQuestion(part, group, aspect) {
 function playCurrentVideos() {
     document.querySelectorAll(".part2-video").forEach(video => {
         video.currentTime = 0;
+        if (video.dataset.audioEnabled !== "true") {
+            video.muted = true;
+        }
         const playPromise = video.play();
         if (playPromise) {
             playPromise.catch(() => {
@@ -462,9 +475,23 @@ function replayPart2Videos() {
     document.querySelectorAll(".part2-video").forEach(video => {
         video.pause();
         video.currentTime = 0;
-        video.muted = false;
     });
     playCurrentVideos();
+}
+
+function toggleCandidateAudio(button) {
+    const video = button.closest(".candidate-video-frame")?.querySelector(".part2-video");
+    if (!video) return;
+
+    video.muted = !video.muted;
+    video.dataset.audioEnabled = String(!video.muted);
+    button.textContent = video.muted ? "🔇" : "🔊";
+    button.setAttribute("aria-pressed", String(!video.muted));
+    button.setAttribute("title", video.muted ? "Turn sound on" : "Turn sound off");
+    button.setAttribute(
+        "aria-label",
+        `${video.muted ? "Turn sound on" : "Turn sound off"} for this video`
+    );
 }
 
 function renderNavigation(pageNumber) {

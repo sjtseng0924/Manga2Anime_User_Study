@@ -259,6 +259,29 @@ input {
     object-fit: contain;
 }
 
+.video-audio-button {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 999px;
+    padding: 0;
+    background: rgba(15, 20, 24, 0.82);
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.video-audio-button:hover,
+.video-audio-button:focus-visible {
+    background: rgba(15, 20, 24, 0.98);
+}
+
 .missing-image-text {
     display: none;
     color: var(--muted);
@@ -376,8 +399,17 @@ input {
 
 .media-actions {
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
     margin: -8px 0 12px;
+}
+
+.video-wait-note {
+    margin: 0;
+    color: #c62828;
+    font-size: 18px;
+    font-weight: 700;
 }
 
 .replay-button {
