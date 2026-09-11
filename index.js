@@ -118,15 +118,26 @@ const PARTS = [
     },
 ];
 
+function shuffleOptions(options) {
+    const shuffled = [...options];
+
+    for (let index = shuffled.length - 1; index > 0; index -= 1) {
+        const randomIndex = Math.floor(Math.random() * (index + 1));
+        [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+    }
+
+    return shuffled;
+}
+
 PARTS.forEach(part => {
     part.groups = CASE_FOLDERS.map((folder, index) => ({
         id: folder,
         title: `Question ${index + 1}`,
         setNumber: index + 1,
-        data: part.options.map(option => ({
+        data: shuffleOptions(part.options.map(option => ({
             ...option,
             url: `data/${part.key}/${folder}/${option.file}`,
-        })),
+        }))),
         answers: {},
     }));
 });
