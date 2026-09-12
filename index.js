@@ -118,6 +118,10 @@ const PARTS = [
     },
 ];
 
+const DRAFT_STORAGE_KEY = "manga2anime_user_study_draft_v2";
+const DRAFT_VERSION = 2;
+const savedDraft = readDraft();
+
 function shuffleOptions(options) {
     const shuffled = [...options];
 
@@ -129,15 +133,30 @@ function shuffleOptions(options) {
     return shuffled;
 }
 
+function getSavedOptionOrder(partKey, groupId) {
+    return savedDraft?.optionOrders?.[partKey]?.[groupId] || null;
+}
+
+function applySavedOptionOrder(partKey, groupId, options) {
+    const savedOrder = getSavedOptionOrder(partKey, groupId);
+    if (!savedOrder || savedOrder.length !== options.length) return options;
+
+    const optionsByValue = new Map(options.map(option => [option.value, option]));
+    const ordered = savedOrder.map(value => optionsByValue.get(value));
+    if (ordered.some(option => !option)) return options;
+
+    return ordered;
+}
+
 PARTS.forEach(part => {
     part.groups = CASE_FOLDERS.map((folder, index) => ({
         id: folder,
         title: `Question ${index + 1}`,
         setNumber: index + 1,
-        data: shuffleOptions(part.options.map(option => ({
+        data: applySavedOptionOrder(part.key, folder, shuffleOptions(part.options.map(option => ({
             ...option,
             url: `data/${part.key}/${folder}/${option.file}`,
-        }))),
+        })))),
         answers: {},
     }));
 });
@@ -149,6 +168,8 @@ const data_list = {
     part1: PARTS[0].groups,
     part2: PARTS[1].groups,
 };
+
+loadDraft(savedDraft);
 
 function getTotalPages() {
     return PARTS.reduce((total, part) => total + 1 + part.groups.length, 0);
@@ -172,10 +193,80 @@ function getPageInfo(pageNumber) {
     return null;
 }
 
+function readDraft() {
+    try {
+        const rawDraft = window.localStorage.getItem(DRAFT_STORAGE_KEY);
+        if (!rawDraft) return null;
+
+        const draft = JSON.parse(rawDraft);
+        if (draft.version !== DRAFT_VERSION) return null;
+
+        return draft;
+    } catch (err) {
+        console.warn("Unable to read saved draft.", err);
+        return null;
+    }
+}
+
+function loadDraft(draft) {
+    if (!draft) return;
+
+    data_list.username = draft.username || "";
+
+    PARTS.forEach(part => {
+        const savedPart = draft.answers?.[part.key] || {};
+        part.groups.forEach(group => {
+            group.answers = { ...(savedPart[group.id] || {}) };
+        });
+    });
+
+    const savedPage = Number(draft.page);
+    if (Number.isFinite(savedPage)) {
+        now = Math.min(Math.max(savedPage, 0), getTotalPages());
+    }
+}
+
+function persistDraft() {
+    try {
+        const answers = {};
+        const optionOrders = {};
+
+        PARTS.forEach(part => {
+            answers[part.key] = {};
+            optionOrders[part.key] = {};
+
+            part.groups.forEach(group => {
+                answers[part.key][group.id] = { ...group.answers };
+                optionOrders[part.key][group.id] = group.data.map(candidate => candidate.value);
+            });
+        });
+
+        window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
+            version: DRAFT_VERSION,
+            page: now,
+            username: data_list.username,
+            answers,
+            optionOrders,
+            updatedAt: new Date().toISOString(),
+        }));
+    } catch (err) {
+        console.warn("Unable to save draft.", err);
+    }
+}
+
+function clearDraft() {
+    try {
+        window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+    } catch (err) {
+        console.warn("Unable to clear draft.", err);
+    }
+}
+
 function prevPage() {
     savePageData({ requireComplete: false });
     now = Math.max(0, now - 1);
     renderObjects(now);
+    persistDraft();
 }
 
 function nextPage() {
@@ -189,6 +280,7 @@ function nextPage() {
 
     now += 1;
     renderObjects(now);
+    persistDraft();
 }
 
 function savePageData({ requireComplete }) {
@@ -516,6 +608,7 @@ function renderNavigation(pageNumber) {
 }
 
 function renderSuccessPage() {
+    clearDraft();
     document.body.className = "success-page";
     document.body.innerHTML = `
         <main class="success-panel">
@@ -533,3 +626,22 @@ function escapeHtml(value) {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 }
+
+document.addEventListener("input", event => {
+    if (event.target?.id === "username") {
+        data_list.username = event.target.value.trim();
+        persistDraft();
+    }
+});
+
+document.addEventListener("change", event => {
+    if (event.target?.matches('input[type="radio"]')) {
+        savePageData({ requireComplete: false });
+        persistDraft();
+    }
+});
+
+window.addEventListener("beforeunload", () => {
+    savePageData({ requireComplete: false });
+    persistDraft();
+});
