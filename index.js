@@ -266,6 +266,7 @@ function prevPage() {
     savePageData({ requireComplete: false });
     now = Math.max(0, now - 1);
     renderObjects(now);
+    scrollToPageTop();
     persistDraft();
 }
 
@@ -280,6 +281,7 @@ function nextPage() {
 
     now += 1;
     renderObjects(now);
+    scrollToPageTop();
     persistDraft();
 }
 
@@ -377,6 +379,12 @@ function setNextButtonState(enabled) {
     if (!nextButton) return;
     nextButton.disabled = !enabled;
     nextButton.classList.toggle("is-disabled", !enabled);
+}
+
+function scrollToPageTop() {
+    window.requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    });
 }
 
 function renderObjects(pageNumber) {
