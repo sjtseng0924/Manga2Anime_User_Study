@@ -233,24 +233,6 @@ input {
     margin: 0;
 }
 
-.page-number {
-    position: absolute;
-    top: -8px;
-    left: -8px;
-    z-index: 1;
-    display: grid;
-    place-items: center;
-    width: 30px;
-    height: 30px;
-    border: 2px solid var(--white);
-    border-radius: 50%;
-    background: var(--ink);
-    color: var(--white);
-    font-size: 16px;
-    font-weight: 900;
-    line-height: 1;
-}
-
 .manga-pages img {
     display: block;
     width: 100%;

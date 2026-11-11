@@ -493,8 +493,7 @@ function renderTrial(index) {
     // Japanese reading order: page 1 on the right.
     const pageHtml = pages.map((src, k) => `
         <figure class="manga-page">
-            <span class="page-number">${k + 1}</span>
-            <img src="${src}" alt="manga page ${k + 1}" onclick="openLightbox(this.src)">
+            <img src="${src}" alt="manga page ${k + 1}" onclick="openLightbox('${src.replace(".jpg", "_num.jpg")}')">
         </figure>
     `).reverse().join("");
 
