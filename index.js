@@ -1,4 +1,4 @@
-// Manga2Animate user study: pairwise video comparison (2AFC).
+// User study: pairwise video comparison (2AFC).
 // Each participant gets TRIALS_PER_USER trials. A trial is one manga case plus two methods' videos,
 // shown as Video A / Video B in random order. For every criterion the participant picks the better one.
 // Trials are assigned by the Apps Script backend so that the (case, method pair) cells with the
@@ -174,7 +174,7 @@ const I18N = {
 
 /* ------------------------------------------------------------------ state */
 
-const DRAFT_STORAGE_KEY = "manga2anime_user_study_" + STUDY_VERSION;
+const DRAFT_STORAGE_KEY = "video_study_" + STUDY_VERSION;
 
 const state = {
     page: 0,
