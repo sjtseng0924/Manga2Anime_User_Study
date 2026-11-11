@@ -1,67 +1,15 @@
-# Data Layout
-
-The study uses the same 8 case folders for Part 1 and Part 2:
-
-- `dualjustice1`
-- `dualjustice2`
-- `elf2`
-- `elf3`
-- `goblin`
-- `kick`
-- `lovehina`
-- `mado`
-
-## Part 1: storyboard images
-
-Put 5 PNG files in each case folder:
+# Data layout
 
 ```text
 data/
-  part1/
-    dualjustice1/
-      ours.png
-      animaker.png
-      storydiffusion.png
-      storyiter.png
-      anystory.png
-    dualjustice2/
-      ours.png
-      animaker.png
-      storydiffusion.png
-      storyiter.png
-      anystory.png
-    ...
-    mado/
-      ours.png
-      animaker.png
-      storydiffusion.png
-      storyiter.png
-      anystory.png
+  manga/<case>/page_manga_<n>.jpg     montage of the six input panels, right-to-left reading order
+  videos/<case>/<method>.mp4          method in {ours, animaker, vimax, storymem, mangadirect}
 ```
 
-## Part 2: videos
+Cases (20): elf2, elf3, goblin, mado, dualjustice1, lovehina, kick, dualjustice2, burari, lovehina_vol01,
+paradon, rent_a_girlfriend, baseball, tadaima, slap_shot_girls, lovehina_vol14, hisoka_returns,
+hakura_refrain, aoni_rakurai, iseoji.
 
-Put 4 MP4 files in each case folder:
-
-```text
-data/
-  part2/
-    dualjustice1/
-      ours.mp4
-      animaker.mp4
-      vimax.mp4
-      storymem.mp4
-    dualjustice2/
-      ours.mp4
-      animaker.mp4
-      vimax.mp4
-      storymem.mp4
-    ...
-    mado/
-      ours.mp4
-      animaker.mp4
-      vimax.mp4
-      storymem.mp4
-```
-
-The page shows these files to users only as `Option A`, `Option B`, etc. The real method names are still stored in the submitted data.
+All videos are re-encoded to H.264 (at most 960x540, 24 fps, CRF 26, faststart, AAC 96k) so they load
+quickly and play in sync. StoryMem outputs have no audio track; sound is muted by default for all videos.
+The page number of manga pages per case is listed in `CASES` in `index.js`.

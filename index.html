@@ -1,34 +1,47 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Study</title>
+    <title>Manga2Animate User Study</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
     <script>
         document.write('<link rel="stylesheet" href="style.css?v=' + Date.now() + '">');
     </script>
 </head>
 
 <body>
+    <div id="dev_banner" class="dev-banner" hidden></div>
+    <header class="topbar">
+        <span class="brand">User study</span>
+        <div id="progress" class="progress" aria-live="polite"></div>
+        <button type="button" id="lang_toggle" class="lang-toggle" onclick="toggleLanguage()">EN</button>
+    </header>
+
     <main class="app-shell">
-        <form id="study_form">
-            <div id="images"></div>
-            <div id="questions"></div>
+        <form id="study_form" onsubmit="return false">
+            <div id="content"></div>
         </form>
 
         <div class="navigation-container">
             <button type="button" id="prev_button" onclick="prevPage()">PREV</button>
-            <p id="num_page"></p>
             <button type="button" id="next_button" onclick="nextPage()">NEXT</button>
         </div>
     </main>
 
-    <script src="index.js"></script>
+    <div id="lightbox" class="lightbox" hidden onclick="closeLightbox()">
+        <img id="lightbox_img" alt="">
+    </div>
+
     <script>
+        // Google Apps Script web app URL (deploy google_apps_script.gs, see Readme.md).
+        // Leave empty for a dry run: assignment is sampled locally and nothing is saved.
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwDcjC6HVhUxcYYOvQCATMu6oqLqGxSvfyHb7QztLGw-O24waUIod5PsXRKjLR3pJW8NA/exec";
-        renderObjects(now);
     </script>
+    <script src="index.js"></script>
 </body>
 
 </html>

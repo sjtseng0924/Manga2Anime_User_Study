@@ -1,109 +1,49 @@
-## User Study Template (Sortable + Google Apps Script)
+## Manga2Animate User Study (pairwise video comparison)
 
-This is a customized User Study template that features drag-and-drop ranking based on Yes/No evaluation of generation results.
+Each participant answers 20 trials (`?n=` overrides). A trial shows a manga excerpt and two videos
+generated from it by two different methods, as Video A / Video B in random order. For each of five
+criteria the participant picks the better one (forced choice, no tie):
 
-### Features
-1. Displays a **Reference Image/Video** alongside multiple **Candidate Images/Videos**.
-2. Requires the user to first evaluate each candidate using **Yes/No** selection.
-3. Once marked as "Yes", the candidate dynamically drops into a Rank List where the user can drag and drop to rank their preferences.
-4. Auto-calculates ranking:
-   - "Yes" candidates are ranked 1 to K based on drag-and-drop order.
-   - "No" candidates are assigned a rank of K + 1.
-5. Saves all interaction state so the user can freely go PREV / NEXT without losing their answers.
-6. Submits data seamlessly to your Google Sheets using a hidden Google Apps Script (GAS) API.
+| key | criterion |
+|---|---|
+| `fidelity` | visual fidelity to the manga (characters and backgrounds) |
+| `story` | story faithfulness (actions and emotions follow the manga) |
+| `coherence` | video coherence (transitions, consistency, smooth motion) |
+| `aesthetics` | visual aesthetics |
+| `overall` | overall preference |
 
----
+Methods (codes stored in the sheet): `ours` (FLUX.2 storyboard + MiniMax), `animaker` (AniMaker + MiniMax),
+`vimax` (ViMax + MiniMax), `storymem` (StoryMem), `mangadirect` (manga direct + MiniMax, best of 3).
+20 cases x 10 method pairs = 200 cells.
 
-### Step 1: Deploy Google Apps Script (GAS)
+UI language: Traditional Chinese or English, switchable at any time with the button at the top right
+(`?lang=en` / `?lang=zh` sets the default; otherwise the browser language decides).
+Progress is kept in localStorage, so a participant who reloads continues where they left off.
 
-To capture the data automatically into Google Sheets without exposing your credentials, follow these steps:
+### Adaptive sampling
 
-1. Open your Google Drive, click **New**, and create a new **Google Sheets** document. Name it for your User Study.
-2. In the top nav menu, click **Extensions > Apps Script**.
-3. Replace the default `myFunction()` code with the following code to receive JSON:
+When a participant leaves the instructions page, the page asks the Apps Script backend for an assignment.
+The backend counts answered trials per (case, method pair) cell, plus trials handed out in the last
+60 minutes that are not answered yet, and builds the assignment greedily: least-filled cell first, each
+of the 10 method pairs exactly twice, all 20 cases once. With a steady stream of participants every cell
+fills evenly (10 participants = 1 answer per cell). Without a backend URL the same sampler runs in the
+browser with zero counts (a yellow "dry run" banner is shown and nothing is saved).
 
-```javascript
-// Google Apps Script - doPost endpoint
-function doPost(e) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  
-  // Parse the JSON data sent from index.js
-  var data = JSON.parse(e.postData.contents);
-  var username = data.username;
-  var timestamp = data.timestamp;
+Each trial is uploaded as soon as the participant moves on (upsert on participant + trial index), so
+partial sessions still count, and the final SUBMIT resends everything.
 
-  // We are putting timestamp & username in the first two columns
-  var rowData = [timestamp, username];
+### Deploy the backend
 
-  // Modify this array according to your num_tasks and candidate 'value' names in index.html
-  // Currently, the default values are "codef", "medm", "ours" and tasks are 1 to 15.
-  // We recommend you auto-parse the keys like so to make it dynamic:
-  
-  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  
-  // If the sheet is completely empty, you might want to write headers dynamically!
-  if (headers.length <= 1) { // It means empty sheet or close to it
-    var newHeaders = ["Timestamp", "Username"];
-    for (var key in data) {
-      if (key !== "username" && key !== "timestamp") {
-        newHeaders.push(key);
-      }
-    }
-    sheet.appendRow(newHeaders);
-    headers = newHeaders;
-  }
+1. Create a Google Sheet, open Extensions > Apps Script, paste `google_apps_script.gs`, save.
+2. Deploy > New deployment > Web app, Execute as: Me, Who has access: Anyone. Copy the URL.
+3. Put it in `GAS_API_URL` in `index.html`.
 
-  // Map the received data to the correct column dynamically based on headers
-  for (var i = 2; i < headers.length; i++) {
-    var keyName = headers[i];
-    rowData.push(data[keyName] === undefined ? "" : data[keyName]);
-  }
+The script creates two tabs: `responses` (one row per answered trial; each criterion column holds the
+winning method code) and `assignments`. `<web app URL>?action=stats` returns per-cell, per-case and
+per-pair counts for monitoring.
 
-  // Append data row
-  sheet.appendRow(rowData);
+Keep `METHODS` / `CASES` / the sampler identical in `index.js` and `google_apps_script.gs`.
 
-  return ContentService.createTextOutput("Success").setMimeType(ContentService.MimeType.TEXT);
-}
-```
+### Data
 
-4. Click the **Save** (disk icon).
-5. Click **Deploy > New Deployment** in the top right.
-6. Click the gear icon next to "Select type" and choose **Web app**.
-7. In the settings:
-   - Execute as: **Me**
-   - Who has access: **Anyone**
-8. Click **Deploy**. (Google will ask you to authorize access to your Google Account. You may see a "Google hasn't verified this app" warning. Click 'Advanced' and proceed to your script).
-9. Copy the **Web app URL**.
-
-### Step 2: Configure the Frontend
-
-1. Open `index.html`.
-2. Locate the following line (around line 43):
-   ```javascript
-   const GAS_API_URL = "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
-   ```
-3. Paste the URL you copied from Step 1.
-
-### Step 3: Modify Your Data Pipeline
-
-The frontend data is populated dynamically.
-
-In `index.html`, locate the `data_list` generation block (around line 52):
-```javascript
-for(let i=1; i<=15; i++) {
-    data_list.push({
-        "name": `${i}`,
-        "input": `data/${i}/original_fps15.mp4`, // Reference
-        "data": [ // Candidates
-            { "url": `data/${i}/codef_fps15.mp4`, "value": "codef", ... },
-            { "url": `data/${i}/medm_fps15.mp4`, "value": "medm", ... },
-            { "url": `data/${i}/ours_fps15.mp4`, "value": "ours", ... },
-        ]
-    });
-}
-```
-
-Change `value` strings to whatever short codes you want to register in your Google Sheets column headers (e.g. `ours`, `baselineA`).
-If you need `<image>`, adjust `element_type` variable to `"image"`.
-
-Enjoy collecting your customized ranking data!
+See `data/README.md`. Videos are stored with Git LFS.
