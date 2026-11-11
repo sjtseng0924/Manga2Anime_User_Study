@@ -1,4 +1,4 @@
-// Manga2Animate user study backend (Google Apps Script, bound to a Google Sheet).
+// Manga2Animate user study backend (Google Apps Script web app).
 //
 // GET  ?action=assign&n=10&pid=<participant>   -> { assignment_id, trials: [{case, a, b}] }
 // GET  ?action=stats                            -> per-cell / per-case / per-pair answer counts
@@ -10,6 +10,9 @@
 //                participants who are answering at the same time
 //
 // Keep METHODS / CASES / the shared sampler block identical to index.js.
+
+// Results go to this Google Sheet (works whether or not the script is bound to it).
+var SPREADSHEET_ID = "1W9q-TqZeZf4pcF-QyC_WcSM2PnGF8LQa6E9UY67s3EI";
 
 var METHODS = ["ours", "animaker", "vimax", "storymem", "mangadirect"];
 var CASES = [
@@ -250,7 +253,7 @@ function indexOf_(headerRow) {
 }
 
 function sheet_(name, headers) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName(name) || ss.insertSheet(name);
   if (sheet.getLastRow() === 0) {
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);

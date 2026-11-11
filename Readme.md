@@ -34,9 +34,12 @@ partial sessions still count, and the final SUBMIT resends everything.
 
 ### Deploy the backend
 
-1. Create a Google Sheet, open Extensions > Apps Script, paste `google_apps_script.gs`, save.
-2. Deploy > New deployment > Web app, Execute as: Me, Who has access: Anyone. Copy the URL.
-3. Put it in `GAS_API_URL` in `index.html`.
+1. Set `SPREADSHEET_ID` at the top of `google_apps_script.gs` to the results Google Sheet
+   (currently the "User study" sheet).
+2. In that sheet, open Extensions > Apps Script, paste `google_apps_script.gs`, save.
+3. Deploy > New deployment > Web app, Execute as: Me, Who has access: Anyone. Authorize, copy the URL.
+4. Put it in `GAS_API_URL` in `index.html`. Later code changes: Manage deployments > edit > New version
+   keeps the same URL.
 
 The script creates two tabs: `responses` (one row per answered trial; each criterion column holds the
 winning method code) and `assignments`. `<web app URL>?action=stats` returns per-cell, per-case and
