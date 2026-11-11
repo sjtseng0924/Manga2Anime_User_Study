@@ -41,8 +41,10 @@ partial sessions still count, and the final SUBMIT resends everything.
 4. Put it in `GAS_API_URL` in `index.html`. Later code changes: Manage deployments > edit > New version
    keeps the same URL.
 
-The script creates two tabs: `responses` (one row per answered trial; each criterion column holds the
-winning method code) and `assignments`. `<web app URL>?action=stats` returns per-cell, per-case and
+The script creates two tabs. `responses` has one row per answered question: timestamp, username, case,
+video_A, video_B, then the winning method for manga_fidelity / story / coherence / aesthetics / overall
+(plus seconds and lang; three bookkeeping columns on the right are hidden). `assignments` is hidden
+bookkeeping for the sampler. `<web app URL>?action=stats` returns per-cell, per-case and
 per-pair counts for monitoring.
 
 Keep `METHODS` / `CASES` / the sampler identical in `index.js` and `google_apps_script.gs`.

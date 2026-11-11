@@ -26,10 +26,27 @@ var CRITERIA = ["fidelity", "story", "coherence", "aesthetics", "overall"];
 var PENDING_TTL_MINUTES = 60;
 var MAX_TRIALS = 20; // no case repeats within one participant
 
-var RESPONSE_HEADERS = [
-  "key", "received_at", "participant_id", "username", "lang", "study_version",
-  "assignment_id", "assignment_source", "trial_index", "num_trials", "case", "video_a", "video_b"
-].concat(CRITERIA).concat(["seconds_on_trial", "final"]);
+// responses tab: what you read first, then helper columns (hidden) used for de-duplication and sampling.
+// Each criterion column holds the method that won it.
+var RESPONSE_COLUMNS = [
+  ["timestamp", "received_at"],
+  ["username", "username"],
+  ["case", "case"],
+  ["video_A", "video_a"],
+  ["video_B", "video_b"],
+  ["manga_fidelity", "fidelity"],
+  ["story", "story"],
+  ["coherence", "coherence"],
+  ["aesthetics", "aesthetics"],
+  ["overall", "overall"],
+  ["seconds", "seconds_on_trial"],
+  ["lang", "lang"],
+  ["key", "key"],
+  ["assignment_id", "assignment_id"],
+  ["trial_index", "trial_index"]
+];
+var RESPONSE_HEADERS = RESPONSE_COLUMNS.map(function (c) { return c[0]; });
+var VISIBLE_RESPONSE_COLUMNS = 12; // timestamp .. lang; key / assignment_id / trial_index are hidden
 var ASSIGNMENT_HEADERS = ["assignment_id", "created_at", "participant_id", "study_version", "trials_json"];
 
 /* ------------------------------------------------------------------ entry points */
@@ -58,23 +75,22 @@ function doPost(e) {
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
-    var sheet = sheet_("responses", RESPONSE_HEADERS);
-    var keyCol = sheet.getRange(1, 1, Math.max(sheet.getLastRow(), 1), 1).getValues();
+    var sheet = sheet_("responses", RESPONSE_HEADERS, VISIBLE_RESPONSE_COLUMNS);
+    var keyIndex = RESPONSE_HEADERS.indexOf("key");
+    var data = sheet.getDataRange().getValues();
     var rowOfKey = {};
-    for (var i = 1; i < keyCol.length; i++) rowOfKey[keyCol[i][0]] = i + 1;
+    for (var i = 1; i < data.length; i++) rowOfKey[data[i][keyIndex]] = i + 1;
 
-    var now = new Date().toISOString();
-    var isFinal = payload.type === "final";
+    var now = Utilities.formatDate(new Date(), "Asia/Taipei", "yyyy-MM-dd HH:mm:ss");
     (payload.rows || []).forEach(function (row) {
       if (!row.participant_id || !row.trial_index) return;
       var complete = CRITERIA.every(function (c) { return row[c]; });
       if (!complete) return;
       var key = row.participant_id + "#" + row.trial_index;
-      var values = RESPONSE_HEADERS.map(function (h) {
-        if (h === "key") return key;
-        if (h === "received_at") return now;
-        if (h === "final") return isFinal ? "yes" : "";
-        return row[h] === undefined ? "" : row[h];
+      var values = RESPONSE_COLUMNS.map(function (c) {
+        if (c[1] === "key") return key;
+        if (c[1] === "received_at") return now;
+        return row[c[1]] === undefined ? "" : row[c[1]];
       });
       if (rowOfKey[key]) {
         sheet.getRange(rowOfKey[key], 1, 1, values.length).setValues([values]);
@@ -95,7 +111,7 @@ function assign_(n, pid, version) {
   var counts = currentCounts_(true);
   var trials = sampleTrials_(n, counts);
   var id = Utilities.getUuid();
-  sheet_("assignments", ASSIGNMENT_HEADERS).appendRow([
+  sheet_("assignments", ASSIGNMENT_HEADERS, 0).appendRow([
     id, new Date().toISOString(), pid, version, JSON.stringify(trials)
   ]);
   return { assignment_id: id, trials: trials };
@@ -105,19 +121,19 @@ function assign_(n, pid, version) {
 function currentCounts_(includePending) {
   var counts = {};
   var answered = {};
-  var responses = sheet_("responses", RESPONSE_HEADERS);
+  var responses = sheet_("responses", RESPONSE_HEADERS, VISIBLE_RESPONSE_COLUMNS);
   var data = responses.getDataRange().getValues();
   var col = indexOf_(data[0]);
   for (var i = 1; i < data.length; i++) {
     var r = data[i];
-    if (!r[col.case]) continue;
-    add_(counts, cellKey_(r[col.case], r[col.video_a], r[col.video_b]), 1);
+    if (!r[col["case"]]) continue;
+    add_(counts, cellKey_(r[col["case"]], r[col.video_A], r[col.video_B]), 1);
     answered[r[col.assignment_id] + "#" + r[col.trial_index]] = true;
   }
   if (!includePending) return counts;
 
   var cutoff = Date.now() - PENDING_TTL_MINUTES * 60 * 1000;
-  var assignments = sheet_("assignments", ASSIGNMENT_HEADERS).getDataRange().getValues();
+  var assignments = sheet_("assignments", ASSIGNMENT_HEADERS, 0).getDataRange().getValues();
   for (var j = assignments.length - 1; j >= 1; j--) {
     var created = new Date(assignments[j][1]).getTime();
     if (!(created >= cutoff)) break; // rows are appended in time order
@@ -252,12 +268,22 @@ function indexOf_(headerRow) {
   return col;
 }
 
-function sheet_(name, headers) {
+// visible = number of leading columns to keep visible; 0 hides the whole tab (bookkeeping only).
+function sheet_(name, headers, visible) {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName(name) || ss.insertSheet(name);
-  if (sheet.getLastRow() === 0) {
-    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  var lastRow = sheet.getLastRow();
+  var current = lastRow > 0 ? sheet.getRange(1, 1, 1, headers.length).getValues()[0] : [];
+  var same = headers.every(function (h, i) { return current[i] === h; });
+  if (!same && lastRow <= 1) {
+    sheet.clear();
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight("bold");
     sheet.setFrozenRows(1);
+    if (visible === 0) {
+      sheet.hideSheet();
+    } else if (visible < headers.length) {
+      sheet.hideColumns(visible + 1, headers.length - visible);
+    }
   }
   return sheet;
 }
