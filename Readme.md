@@ -43,7 +43,7 @@ partial sessions still count, and the final SUBMIT resends everything.
 
 The script creates two tabs. `responses` has one row per answered question: timestamp, username, case,
 video_A, video_B, then the winning method for manga_fidelity / story / coherence / aesthetics / overall
-(plus seconds and lang; three bookkeeping columns on the right are hidden). `assignments` is hidden
+(three bookkeeping columns on the right are hidden). `assignments` is hidden
 bookkeeping for the sampler. `<web app URL>?action=stats` returns per-cell, per-case and
 per-pair counts for monitoring.
 

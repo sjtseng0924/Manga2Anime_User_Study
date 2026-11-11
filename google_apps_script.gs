@@ -39,14 +39,12 @@ var RESPONSE_COLUMNS = [
   ["coherence", "coherence"],
   ["aesthetics", "aesthetics"],
   ["overall", "overall"],
-  ["seconds", "seconds_on_trial"],
-  ["lang", "lang"],
   ["key", "key"],
   ["assignment_id", "assignment_id"],
   ["trial_index", "trial_index"]
 ];
 var RESPONSE_HEADERS = RESPONSE_COLUMNS.map(function (c) { return c[0]; });
-var VISIBLE_RESPONSE_COLUMNS = 12; // timestamp .. lang; key / assignment_id / trial_index are hidden
+var VISIBLE_RESPONSE_COLUMNS = 10; // timestamp .. overall; key / assignment_id / trial_index are hidden
 var ASSIGNMENT_HEADERS = ["assignment_id", "created_at", "participant_id", "study_version", "trials_json"];
 
 /* ------------------------------------------------------------------ entry points */
