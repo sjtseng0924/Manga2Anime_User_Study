@@ -492,7 +492,10 @@ function renderTrial(index) {
     const pages = Array.from({ length: caseInfo.pages }, (_, k) => `data/manga/${trial.case}/page_manga_${k + 1}.jpg`);
     // Japanese reading order: page 1 on the right.
     const pageHtml = pages.map((src, k) => `
-        <img src="${src}" alt="manga page ${k + 1}" onclick="openLightbox(this.src)">
+        <figure class="manga-page">
+            <span class="page-number">${k + 1}</span>
+            <img src="${src}" alt="manga page ${k + 1}" onclick="openLightbox(this.src)">
+        </figure>
     `).reverse().join("");
 
     document.getElementById("content").innerHTML = `
