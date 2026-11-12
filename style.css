@@ -503,3 +503,8 @@ input {
         min-width: 0;
     }
 }
+
+.done-panel a {
+    color: var(--ink);
+    font-weight: 700;
+}

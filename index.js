@@ -83,6 +83,8 @@ const I18N = {
         submitError: "送出失敗，請確認網路後再按一次送出。",
         doneTitle: "已完成，謝謝你的參與！",
         doneBody: "你的回答已經送出，可以關閉這個頁面了。",
+        doneProlific: "你的回答已經送出，馬上會帶你回到 Prolific。完成碼：{code}",
+        doneProlificLink: "沒有自動跳轉的話，請點這裡回到 Prolific",
         crit: {
             fidelity: {
                 title: "1. 漫畫畫面還原度",
@@ -147,6 +149,8 @@ const I18N = {
         submitError: "Submission failed. Please check your connection and press SUBMIT again.",
         doneTitle: "All done. Thank you!",
         doneBody: "Your answers have been submitted. You can close this page now.",
+        doneProlific: "Your answers have been submitted. Taking you back to Prolific now. Completion code: {code}",
+        doneProlificLink: "If nothing happens, click here to return to Prolific",
         crit: {
             fidelity: {
                 title: "1. Visual fidelity to the manga",
@@ -176,6 +180,12 @@ const I18N = {
 
 const DRAFT_STORAGE_KEY = "video_study_" + STUDY_VERSION;
 
+// Prolific: the study URL carries ?PROLIFIC_PID=...; that ID becomes the username and the
+// participant is sent back to Prolific with the completion code after submitting.
+const PROLIFIC_PID = (new URLSearchParams(window.location.search).get("PROLIFIC_PID") || "").trim();
+const PROLIFIC_COMPLETION_CODE = "CXM050PA";
+const PROLIFIC_COMPLETION_URL = "https://app.prolific.com/submissions/complete?cc=" + PROLIFIC_COMPLETION_CODE;
+
 const state = {
     page: 0,
     lang: defaultLanguage(),
@@ -192,6 +202,7 @@ let isBusy = false;
 let trialStartedAt = null;
 
 loadDraft();
+applyProlificId();
 
 /* ------------------------------------------------------------------ utils */
 
@@ -409,6 +420,19 @@ function loadDraft() {
     }
 }
 
+function applyProlificId() {
+    if (!PROLIFIC_PID) return;
+    // A saved draft from a different Prolific participant on this browser is not theirs to resume.
+    if (state.username && state.username !== PROLIFIC_PID) {
+        clearDraft();
+        Object.assign(state, {
+            page: 0, participantId: makeId(), assignmentId: "", assignmentSource: "",
+            trials: [], sentTrials: {}, finished: false,
+        });
+    }
+    state.username = PROLIFIC_PID;
+}
+
 function persistDraft() {
     try {
         window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
@@ -460,12 +484,13 @@ function renderWelcome() {
             <h1>${t("welcomeTitle")}</h1>
             ${t("welcomeBody").map(p => `<p>${escapeHtml(p.replace("{n}", TRIALS_PER_USER))}</p>`).join("")}
             <p class="lang-hint">${t("langHint")}</p>
+            ${PROLIFIC_PID ? "" : `
             <label class="field-label" for="username">${t("nameLabel")}</label>
             <input type="text" id="username" value="${escapeHtml(state.username)}"
-                placeholder="${escapeHtml(t("namePlaceholder"))}" autocomplete="nickname" autofocus>
+                placeholder="${escapeHtml(t("namePlaceholder"))}" autocomplete="nickname" autofocus>`}
         </section>
     `;
-    document.getElementById("username").addEventListener("keydown", event => {
+    document.getElementById("username")?.addEventListener("keydown", event => {
         if (event.key === "Enter") {
             event.preventDefault();
             nextPage();
@@ -645,6 +670,7 @@ function collectTrialTime() {
 
 function validateCurrentPage() {
     if (state.page === 0) {
+        if (PROLIFIC_PID) return true;
         const input = document.getElementById("username");
         state.username = input.value.trim();
         if (!state.username) {
@@ -735,9 +761,14 @@ function renderDone() {
     document.getElementById("content").innerHTML = `
         <section class="panel done-panel">
             <h1>${t("doneTitle")}</h1>
-            <p>${t("doneBody")}</p>
+            <p>${PROLIFIC_PID ? t("doneProlific").replace("{code}", PROLIFIC_COMPLETION_CODE) : t("doneBody")}</p>
+            ${PROLIFIC_PID ? `<p><a href="${PROLIFIC_COMPLETION_URL}">${t("doneProlificLink")}</a></p>` : ""}
         </section>
     `;
+    if (PROLIFIC_PID && !renderDone.redirected) {
+        renderDone.redirected = true;
+        setTimeout(() => { window.location.href = PROLIFIC_COMPLETION_URL; }, 2500);
+    }
 }
 
 /* ------------------------------------------------------------------ events */
