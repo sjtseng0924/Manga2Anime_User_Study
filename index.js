@@ -489,11 +489,11 @@ function renderTrial(index) {
         return;
     }
     const caseInfo = CASES.find(c => c.id === trial.case);
-    const pages = Array.from({ length: caseInfo.pages }, (_, k) => `data/manga/${trial.case}/page_manga_${k + 1}.jpg`);
+    const pages = Array.from({ length: caseInfo.pages }, (_, k) => `data/manga/${trial.case}/page_manga_${k + 1}_num.jpg`);
     // Japanese reading order: page 1 on the right.
     const pageHtml = pages.map((src, k) => `
         <figure class="manga-page">
-            <img src="${src}" alt="manga page ${k + 1}" onclick="openLightbox('${src.replace(".jpg", "_num.jpg")}')">
+            <img src="${src}" alt="manga page ${k + 1}" onclick="openLightbox('${src}')">
         </figure>
     `).reverse().join("");
 
