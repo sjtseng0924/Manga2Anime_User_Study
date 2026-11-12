@@ -183,7 +183,7 @@ const DRAFT_STORAGE_KEY = "video_study_" + STUDY_VERSION;
 // Prolific: the study URL carries ?PROLIFIC_PID=...; that ID becomes the username and the
 // participant is sent back to Prolific with the completion code after submitting.
 const PROLIFIC_PID = (new URLSearchParams(window.location.search).get("PROLIFIC_PID") || "").trim();
-const PROLIFIC_COMPLETION_CODE = "CXM050PA";
+const PROLIFIC_COMPLETION_CODE = "C9UO8HGR";
 const PROLIFIC_COMPLETION_URL = "https://app.prolific.com/submissions/complete?cc=" + PROLIFIC_COMPLETION_CODE;
 
 const state = {
