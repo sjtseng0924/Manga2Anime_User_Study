@@ -286,6 +286,18 @@ function sheet_(name, headers, visible) {
   return sheet;
 }
 
+// Wipe all responses and assignments and rebuild both tabs. Run it from the Apps Script editor
+// (pick resetSheets in the function menu, then Run). No redeploy needed.
+function resetSheets() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  ["responses", "assignments"].forEach(function (name) {
+    var old = ss.getSheetByName(name);
+    if (old) old.clear();
+  });
+  sheet_("responses", RESPONSE_HEADERS, VISIBLE_RESPONSE_COLUMNS);
+  sheet_("assignments", ASSIGNMENT_HEADERS, 0);
+}
+
 function json_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
