@@ -6,12 +6,30 @@
 
 /* ------------------------------------------------------------------ config */
 
-const STUDY_VERSION = "pairwise_v1";
+const STUDY_VERSION = "pairwise_v2_seedance";
 const TRIALS_PER_USER = clampInt(new URLSearchParams(location.search).get("n"), 20, 1, 20);
 const ASSIGN_TIMEOUT_MS = 10000;
 
 // Method codes are what gets stored; participants only ever see "Video A / Video B".
-const METHODS = ["ours", "animaker", "vimax", "storymem", "mangadirect"];
+// v2: ours / mangadirect / vimax use Seedance 2.0 videos (codes end in _sd so they never mix with the v1
+// MiniMax rows already in the sheet); animaker / storymem are the same videos as v1.
+const METHODS = ["ours_sd", "mangadirect_sd", "vimax_sd", "animaker", "storymem"];
+
+// Pairs asked in v2, with sampling weights. animaker vs storymem is not asked again (v1 answers are reused).
+const PAIRS = [
+    ["ours_sd", "mangadirect_sd", 5],
+    ["ours_sd", "vimax_sd", 2],
+    ["ours_sd", "animaker", 1],
+    ["ours_sd", "storymem", 1],
+    ["mangadirect_sd", "vimax_sd", 1],
+    ["mangadirect_sd", "animaker", 1],
+    ["mangadirect_sd", "storymem", 1],
+    ["vimax_sd", "animaker", 1],
+    ["vimax_sd", "storymem", 1],
+];
+
+// Cells with no video: Seedance refused manga-direct for baseball (copyright).
+const EXCLUDED = { baseball: ["mangadirect_sd"] };
 
 // data/videos/<id>/<method>.mp4 and data/manga/<id>/page_manga_<n>.jpg
 const CASES = [
@@ -255,29 +273,43 @@ function backendEnabled() {
 
 // ---- shared sampler (ES5; identical copy in index.js and google_apps_script.gs) ----
 // counts: { "<case>|<m1>|<m2>": n } with m1 < m2 (answered + pending). Returns n trials {case, a, b}.
-// Each method pair is used floor(n/P) or ceil(n/P) times (extra uses go to the least-filled pairs),
-// no case repeats (n <= number of cases), and the case <-> pair-slot matching minimises the summed
-// counts exactly (Hungarian algorithm), so the least-filled cells are always served first.
-function sampleAssignment(n, counts, cases, methods) {
-  var sorted = methods.slice().sort(), pairs = [], i, j;
-  for (i = 0; i < sorted.length; i++) for (j = i + 1; j < sorted.length; j++) pairs.push([sorted[i], sorted[j]]);
+// pairs: [[m1, m2, weight], ...]. Each pair gets floor(n*w/W) slots per participant; the leftover slots go
+// to the pairs whose answered count, divided by weight, is lowest, so over many participants every pair
+// ends up with answers in proportion to its weight. excluded: { "<case>": [method, ...] } cells that must
+// never be served (a method has no video for that case). No case repeats (n <= number of cases), and the
+// case <-> pair-slot matching minimises the summed counts exactly (Hungarian algorithm), so the
+// least-filled cells are always served first.
+function sampleAssignment(n, counts, cases, pairs, excluded) {
+  var i, j, BLOCK = 1e9;
+  pairs = pairs.map(function (p) { return p[0] < p[1] ? [p[0], p[1], p[2]] : [p[1], p[0], p[2]]; });
+  excluded = excluded || {};
   n = Math.max(1, Math.min(n, cases.length));
   function cnt(c, p) { return counts[c + "|" + p[0] + "|" + p[1]] || 0; }
-  var pairOrder = pairs.map(function (p) {
-    var s = 0; cases.forEach(function (c) { s += cnt(c, p); }); return { p: p, s: s + Math.random() * 1e-3 };
+  function blocked(c, p) { var x = excluded[c] || []; return x.indexOf(p[0]) >= 0 || x.indexOf(p[1]) >= 0; }
+  var W = 0; pairs.forEach(function (p) { W += p[2]; });
+  var slots = [], used = 0;
+  var order = pairs.map(function (p) {
+    var s = 0; cases.forEach(function (c) { s += cnt(c, p); });
+    var base = Math.floor(n * p[2] / W);
+    for (var k = 0; k < base; k++) slots.push(p);
+    used += base;
+    return { p: p, s: s / p[2] + Math.random() * 1e-3 };
   }).sort(function (x, y) { return x.s - y.s; });
-  var slots = [];
-  for (i = 0; i < n; i++) slots.push(pairOrder[i % pairs.length].p);
+  for (i = 0; used < n; i++, used++) slots.push(order[i % order.length].p);
   // square cost matrix: rows = cases, columns = pair slots + zero-cost dummies for unused cases
   var size = cases.length, cost = [];
   for (i = 0; i < size; i++) {
     cost.push([]);
-    for (j = 0; j < size; j++) cost[i].push(j < n ? cnt(cases[i], slots[j]) + Math.random() * 1e-3 : 0);
+    for (j = 0; j < size; j++) {
+      cost[i].push(j >= n ? 0 : blocked(cases[i], slots[j]) ? BLOCK : cnt(cases[i], slots[j]) + Math.random() * 1e-3);
+    }
   }
   var match = hungarian(cost), picked = [];
   for (i = 0; i < size; i++) {
     if (match[i] >= n) continue;
-    var p = slots[match[i]], flip = Math.random() < 0.5;
+    var p = slots[match[i]];
+    if (blocked(cases[i], p)) continue;
+    var flip = Math.random() < 0.5;
     picked.push({ "case": cases[i], a: flip ? p[1] : p[0], b: flip ? p[0] : p[1] });
   }
   for (i = picked.length - 1; i > 0; i--) {
@@ -318,7 +350,7 @@ function hungarian(a) {
 // ---- end shared sampler ----
 
 function sampleTrials(n, counts) {
-    return sampleAssignment(n, counts, CASES.map(c => c.id), METHODS);
+    return sampleAssignment(n, counts, CASES.map(c => c.id), PAIRS, EXCLUDED);
 }
 
 /* ------------------------------------------------------------------ backend */
@@ -335,7 +367,8 @@ async function requestAssignment() {
             clearTimeout(timer);
             const data = await response.json();
             const valid = Array.isArray(data.trials) && data.trials.length > 0 && data.trials.every(tr =>
-                CASES.some(c => c.id === tr.case) && METHODS.includes(tr.a) && METHODS.includes(tr.b) && tr.a !== tr.b);
+                CASES.some(c => c.id === tr.case) && METHODS.includes(tr.a) && METHODS.includes(tr.b) && tr.a !== tr.b
+                && !(EXCLUDED[tr.case] || []).some(m => m === tr.a || m === tr.b));
             if (valid) {
                 return { id: data.assignment_id, source: "server", trials: data.trials };
             }
